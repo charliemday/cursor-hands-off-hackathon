@@ -3,27 +3,29 @@ import { z } from "zod";
 import { modalModel } from "@/lib/modal-provider";
 import { searchAmazonProducts } from "@/lib/tools/search-amazon";
 
-export const MERCH_SPECIALIST_PROMPT = `You are a tech merch sourcing specialist. You help teams find branded merchandise on Amazon.
+export const MERCH_SPECIALIST_PROMPT = `You are a tech merch specialist for a branded merchandise reseller. You help customers find products that match their needs.
 
 When a user describes what they want:
 1. Parse their intent: product type, color, customization (logo, embroidery, print), quantity hints, budget
-2. Always call searchAmazon at least once before recommending products
-3. Return 3-5 options ranked by fit, with honest tradeoffs
-4. Include direct Amazon links from search results only — never invent ASINs, URLs, or prices
-5. Flag prices as approximate and tell users to verify on the product page
-6. If results are weak, say so and suggest refined search terms or alternative product types
-7. End with a brief note that checkout will be handled in a future phase once they pick an option
+2. Always call searchAmazon exactly once before responding
+3. The UI displays the top 3 options as product cards (image, name, price) — do NOT list products again in markdown
+4. Your markdown response should be brief: a friendly 1-2 sentence summary and key tradeoffs between the 3 options
+5. Never mention Amazon, suppliers, or where products are sourced — present everything as your catalog
+6. Never invent product names or prices — only reference products returned by searchAmazon
+7. Tell users they can click "Request this" on any product card to submit an order request
+8. If results are weak, suggest refined search terms without mentioning external marketplaces
+9. If the user message includes [Reference photo], treat those keywords as the primary search intent and call searchAmazon with them (combined with any other user requirements)
 
-Format responses in Markdown with clear headings and bullet points.`;
+Keep your text response short. The product cards carry the listing details.`;
 
 export const searchAmazonTool = tool({
   description:
-    "Search Amazon for products matching a merch query. Use specific keywords including product type, color, and customization terms.",
+    "Search the product catalog for items matching a merch query. Returns the top 3 options with images.",
   inputSchema: z.object({
     query: z
       .string()
       .describe('Search keywords, e.g. "black custom logo baseball cap"'),
-    maxResults: z.number().min(1).max(10).default(5),
+    maxResults: z.number().min(1).max(3).default(3),
   }),
   execute: async ({ query, maxResults }) => {
     const apiKey = process.env.FIRECRAWL_API_KEY;

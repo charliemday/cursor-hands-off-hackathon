@@ -18,6 +18,9 @@
 # production
 /build
 
+# local order storage
+.data/
+
 # misc
 .DS_Store
 *.pem

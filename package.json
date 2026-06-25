@@ -10,9 +10,10 @@
     "smoke-test": "npx tsx scripts/smoke-test.ts"
   },
   "dependencies": {
-    "ai": "^6.0.0",
     "@ai-sdk/openai-compatible": "^2.0.0",
     "@ai-sdk/react": "^3.0.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "ai": "^6.0.0",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Tech Merch Finder",
-  description: "Find tech merch on Amazon with an AI agent",
+  description: "Find and order branded tech merch with an AI assistant",
 };
 
 export default function RootLayout({
