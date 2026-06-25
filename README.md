@@ -1,22 +1,15 @@
 # Tech Merch Finder Agent
 
-AI agent that finds tech merch and lets customers submit order requests. Built with Next.js, Vercel AI SDK (`ToolLoopAgent`), Modal inference, and Supabase.
+AI agent that finds tech merch and lets customers submit order requests. Built with Next.js, Vercel AI SDK (`ToolLoopAgent`), Google Gemini, and Supabase.
 
 ## Setup
 
-### 1. Modal inference
+### 1. Google Gemini API key
 
-```bash
-uvx modal setup
-uvx modal deploy modal/vllm_inference.py
-uvx modal deploy modal/vllm_vision.py
-```
+1. Get an API key at [Google AI Studio](https://aistudio.google.com/apikey).
+2. Set `GOOGLE_GENERATIVE_AI_API_KEY` in `.env.local`.
 
-Copy the deployed URLs:
-- Text agent: `https://your-workspace--merch-vllm-serve.modal.run` → `MODAL_INFERENCE_URL`
-- Vision agent: `https://your-workspace--merch-vllm-vision-serve.modal.run` → `MODAL_VISION_URL`
-
-The vision endpoint (Qwen2.5-VL-7B on A100) powers photo upload search. First request after idle may take ~1–2 min while the GPU cold-starts.
+The app uses **Gemini 2.5 Flash** for both the merch agent and photo analysis (vision).
 
 ### 2. Supabase
 
@@ -31,8 +24,7 @@ cp .env.local.example .env.local
 ```
 
 Set:
-- `MODAL_INFERENCE_URL` — URL from text Modal deploy
-- `MODAL_VISION_URL` — URL from vision Modal deploy (photo upload search)
+- `GOOGLE_GENERATIVE_AI_API_KEY` — from Google AI Studio
 - `FIRECRAWL_API_KEY` — from [firecrawl.dev](https://firecrawl.dev)
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon key
@@ -49,12 +41,25 @@ Open [http://localhost:3000](http://localhost:3000).
 
 **Test flow:** search for merch (text or photo upload) → click **Request this** on a product card → row appears in Supabase `merch_requests` table.
 
+### 5. WhatsApp via Wassist
+
+Connect inbound WhatsApp messages to the same merch agent (search + reply only — no Wassist API keys required).
+
+1. Deploy the app to a public HTTPS URL (e.g. Vercel), or expose local dev with `ngrok http 3000`.
+2. In the [Wassist dashboard](https://wassist.app/agents), create an agent using **Bring Your Own Agent**.
+3. Set the webhook URL to `https://<your-host>/api/webhooks/wassist`.
+4. Deploy the agent and test via the sandbox `connectUrl` shown in the agent overview.
+5. Send a message like *"black custom logo baseball cap"* — you should receive three product image messages followed by a brief text summary.
+
+Photo messages work when `GOOGLE_GENERATIVE_AI_API_KEY` is configured (same as the web UI). Order requests remain on the web UI only.
+
 ## Architecture
 
-- **Modal** — Qwen3-8B (agent) + Qwen2.5-VL-7B (photo analysis) via vLLM
+- **Google Gemini** — Gemini 2.5 Flash (agent + photo analysis)
 - **Next.js API** — `ToolLoopAgent` orchestrates search + response
 - **Firecrawl** — product search (source hidden from customers)
 - **Supabase** — stores order requests for manual fulfillment
+- **Wassist BYOA** — WhatsApp inbound webhook at `/api/webhooks/wassist` (optional)
 
 ## Do you need PayPal or Stripe?
 
@@ -67,3 +72,7 @@ Add Stripe or PayPal later when you're ready for automated checkout.
 - Shopify search
 - Logo compositing / mockups
 - Automated checkout
+
+## Legacy Modal deployment (optional)
+
+The `modal/` folder contains a previous vLLM deployment (Qwen3-8B + Qwen2.5-VL). It is no longer used by the app but kept for reference.

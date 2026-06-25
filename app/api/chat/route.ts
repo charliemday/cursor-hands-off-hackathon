@@ -1,14 +1,12 @@
 import { createAgentUIStreamResponse } from "ai";
 import { merchAgent } from "@/lib/agent/merch-agent";
 import type { MerchAgentUIMessage } from "@/lib/agent/types";
-import {
-  validateModalInferenceUrl,
-  validateModalVisionUrl,
-} from "@/lib/modal-url";
+import { validateGeminiApiKey } from "@/lib/gemini-provider";
 import {
   enrichImageMessages,
   lastUserMessageHasImage,
 } from "@/lib/vision/enrich-image-messages";
+import { logAgentThinking } from "@/lib/agent/log-reasoning";
 
 export const maxDuration = 120;
 
@@ -24,28 +22,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const modalValidation = validateModalInferenceUrl(
-    process.env.MODAL_INFERENCE_URL
-  );
-
-  if (!modalValidation.ok) {
-    return new Response(JSON.stringify({ error: modalValidation.error }), {
+  const geminiValidation = validateGeminiApiKey();
+  if (!geminiValidation.ok) {
+    return new Response(JSON.stringify({ error: geminiValidation.error }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
-  }
-
-  if (lastUserMessageHasImage(messages)) {
-    const visionValidation = validateModalVisionUrl(
-      process.env.MODAL_VISION_URL
-    );
-
-    if (!visionValidation.ok) {
-      return new Response(JSON.stringify({ error: visionValidation.error }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
   }
 
   let uiMessages = messages;
@@ -65,5 +47,7 @@ export async function POST(req: Request) {
   return createAgentUIStreamResponse({
     agent: merchAgent,
     uiMessages,
+    sendReasoning: true,
+    onStepFinish: logAgentThinking,
   });
 }

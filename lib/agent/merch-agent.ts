@@ -1,6 +1,6 @@
 import { ToolLoopAgent, stepCountIs, tool } from "ai";
 import { z } from "zod";
-import { modalModel } from "@/lib/modal-provider";
+import { agentModel } from "@/lib/gemini-provider";
 import { searchAmazonProducts } from "@/lib/tools/search-amazon";
 
 export const MERCH_SPECIALIST_PROMPT = `You are a tech merch specialist for a branded merchandise reseller. You help customers find products that match their needs.
@@ -38,7 +38,7 @@ export const searchAmazonTool = tool({
 });
 
 export const merchAgent = new ToolLoopAgent({
-  model: modalModel,
+  model: agentModel,
   instructions: MERCH_SPECIALIST_PROMPT,
   tools: { searchAmazon: searchAmazonTool },
   stopWhen: stepCountIs(10),

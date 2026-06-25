@@ -1,6 +1,5 @@
 import { generateText } from "ai";
-import { visionModel } from "@/lib/modal-vision-provider";
-import { validateModalVisionUrl } from "@/lib/modal-url";
+import { visionModel, validateGeminiApiKey } from "@/lib/gemini-provider";
 
 const DESCRIBE_PROMPT =
   "Describe this merch/product for a catalog search. Return ONLY comma-separated search keywords: product type, color, material, style. No sentences.";
@@ -9,7 +8,7 @@ export async function describeImageForSearch(
   imageUrl: string,
   userText?: string
 ): Promise<string> {
-  const validation = validateModalVisionUrl(process.env.MODAL_VISION_URL);
+  const validation = validateGeminiApiKey();
   if (!validation.ok) {
     throw new Error(validation.error);
   }

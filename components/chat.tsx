@@ -271,7 +271,8 @@ export function Chat() {
             const products = getProductResults(message);
             const searchQuery = getSearchQuery(message);
             const searching = isSearching(message);
-            const { reasoning } = collectReasoningText(message.parts);
+            const { reasoning, isStreaming: reasoningStreaming } =
+              collectReasoningText(message.parts);
             const textParts = message.parts.filter(
               (part) =>
                 part.type === "text" && stripEmbeddedThinking(part.text).trim()
@@ -284,6 +285,15 @@ export function Chat() {
 
             return (
               <div key={message.id} className="flex flex-col gap-4">
+                {reasoning && (
+                  <AssistantBubble>
+                    <ReasoningDropdown
+                      text={reasoning}
+                      isStreaming={reasoningStreaming}
+                    />
+                  </AssistantBubble>
+                )}
+
                 {searching && (
                   <AssistantBubble>
                     <p className="text-sm text-[var(--muted)] italic">
@@ -304,9 +314,6 @@ export function Chat() {
                 {textParts.map((part, i) =>
                   part.type === "text" ? (
                     <AssistantBubble key={i}>
-                      {reasoning && i === 0 && (
-                        <ReasoningDropdown text={reasoning} />
-                      )}
                       <div className="prose prose-sm max-w-none dark:prose-invert prose-a:text-[var(--accent)]">
                         <ReactMarkdown>
                           {stripEmbeddedThinking(part.text)}
