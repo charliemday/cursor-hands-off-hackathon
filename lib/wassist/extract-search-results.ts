@@ -1,7 +1,13 @@
 import type { AmazonSearchResult } from "@/lib/tools/search-amazon";
 
 type SearchAmazonOutput = {
+  query?: string;
   results?: AmazonSearchResult[];
+};
+
+export type ExtractedSearchResults = {
+  products: AmazonSearchResult[];
+  searchQuery?: string;
 };
 
 type AgentGenerateResult = {
@@ -15,17 +21,20 @@ type AgentGenerateResult = {
 
 export function extractSearchResults(
   result: AgentGenerateResult
-): AmazonSearchResult[] {
+): ExtractedSearchResults {
   for (const step of result.steps) {
     for (const toolResult of step.toolResults) {
       if (toolResult.toolName !== "searchAmazon") continue;
 
       const output = toolResult.output as SearchAmazonOutput | undefined;
       if (output?.results?.length) {
-        return output.results;
+        return {
+          products: output.results,
+          searchQuery: output.query,
+        };
       }
     }
   }
 
-  return [];
+  return { products: [] };
 }

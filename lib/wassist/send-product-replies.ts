@@ -2,13 +2,22 @@ import { formatProductReply } from "@/lib/wassist/format-product-reply";
 import type { WassistReplyBody } from "@/lib/wassist/types";
 import type { AmazonSearchResult } from "@/lib/tools/search-amazon";
 
+type SendProductRepliesOptions = {
+  searchQuery?: string;
+  phoneNumber?: string;
+};
+
 export async function sendProductReplies(
   replyCallback: string,
-  products: AmazonSearchResult[]
+  products: AmazonSearchResult[],
+  options?: SendProductRepliesOptions
 ): Promise<void> {
   for (const [index, product] of products.entries()) {
     const body: WassistReplyBody = {
-      content: formatProductReply(product, index),
+      content: formatProductReply(product, index, {
+        searchQuery: options?.searchQuery,
+        phoneNumber: options?.phoneNumber,
+      }),
     };
 
     if (product.imageUrl) {

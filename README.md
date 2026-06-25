@@ -26,6 +26,7 @@ cp .env.local.example .env.local
 Set:
 - `GOOGLE_GENERATIVE_AI_API_KEY` — from Google AI Studio
 - `FIRECRAWL_API_KEY` — from [firecrawl.dev](https://firecrawl.dev)
+- `NEXT_PUBLIC_APP_URL` — public app URL for WhatsApp request links (optional unless using Wassist)
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon key
 - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (server-side inserts)
@@ -45,13 +46,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Connect inbound WhatsApp messages to the same merch agent (search + reply only — no Wassist API keys required).
 
-1. Deploy the app to a public HTTPS URL (e.g. Vercel), or expose local dev with `ngrok http 3000`.
-2. In the [Wassist dashboard](https://wassist.app/agents), create an agent using **Bring Your Own Agent**.
-3. Set the webhook URL to `https://<your-host>/api/webhooks/wassist`.
-4. Deploy the agent and test via the sandbox `connectUrl` shown in the agent overview.
-5. Send a message like *"black custom logo baseball cap"* — you should receive three product image messages followed by a brief text summary.
+1. Set `NEXT_PUBLIC_APP_URL` to your public HTTPS origin (e.g. `https://your-app.vercel.app`) so WhatsApp messages include clickable request links.
+2. Deploy the app to a public HTTPS URL (e.g. Vercel), or expose local dev with `ngrok http 3000`.
+3. In the [Wassist dashboard](https://wassist.app/agents), create an agent using **Bring Your Own Agent**.
+4. Set the webhook URL to `https://<your-host>/api/webhooks/wassist`.
+5. Deploy the agent and test via the sandbox `connectUrl` shown in the agent overview.
+6. Send a message like *"black custom logo baseball cap"* — you should receive three product image messages (each with a `Request this:` link), then a brief text summary.
 
-Photo messages work when `GOOGLE_GENERATIVE_AI_API_KEY` is configured (same as the web UI). Order requests remain on the web UI only.
+Each product message includes a link to `/request?...` where the customer can confirm and submit an order request. Photo messages work when `GOOGLE_GENERATIVE_AI_API_KEY` is configured (same as the web UI).
 
 ## Architecture
 
