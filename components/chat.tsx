@@ -27,6 +27,9 @@ const EXAMPLE_PROMPTS = [
   "Find something like this photo",
 ];
 
+const WHATSAPP_NUMBER = "+447424845871";
+const WHATSAPP_LINK = "https://wa.me/447424845871";
+
 const MAX_IMAGE_DIMENSION = 1024;
 
 async function resizeImageFile(file: File): Promise<File> {
@@ -214,6 +217,18 @@ export function Chat() {
         <p className="text-sm text-[var(--muted)]">
           Describe the merch you need or upload a reference photo — we&apos;ll
           find options and you can request what you like.
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Prefer WhatsApp? Message us at{" "}
+          <a
+            href={WHATSAPP_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-[var(--accent)] hover:underline"
+          >
+            {WHATSAPP_NUMBER}
+          </a>
+          .
         </p>
       </header>
 

@@ -1,9 +1,10 @@
 import { merchAgent } from "@/lib/agent/merch-agent";
 import { validateGeminiApiKey } from "@/lib/gemini-provider";
 import { extractSearchResults } from "@/lib/wassist/extract-search-results";
+import { formatProductReply } from "@/lib/wassist/format-product-reply";
 import { formatWhatsAppSummary } from "@/lib/wassist/format-whatsapp-summary";
+import { parseWassistInboundPayload } from "@/lib/wassist/parse-inbound-payload";
 import { sendProductReplies } from "@/lib/wassist/send-product-replies";
-import type { WassistInboundPayload } from "@/lib/wassist/types";
 import { describeImageForSearch } from "@/lib/vision/describe-image";
 
 export const maxDuration = 120;
@@ -52,32 +53,45 @@ function withWhatsAppChannelHint(prompt: string): string {
 }
 
 export async function POST(req: Request) {
-  let payload: WassistInboundPayload;
+  let rawPayload: unknown;
 
   try {
-    payload = (await req.json()) as WassistInboundPayload;
+    rawPayload = await req.json();
   } catch {
     return wassistReply("Sorry, I couldn't read your message. Please try again.");
   }
 
-  const { message, image, phone_number: phoneNumber, reply_callback: replyCallback } = payload;
+  const payload = parseWassistInboundPayload(rawPayload);
+  const { message, image, phone_number: phoneNumber, reply_callback: replyCallback } =
+    payload;
 
   const envError = validateEnv(Boolean(image));
   if (envError) return envError;
 
   try {
-    const userPrompt = await buildUserPrompt(message ?? "", image);
+    const userPrompt = await buildUserPrompt(message, image);
     const result = await merchAgent.generate({ prompt: userPrompt });
     const { products, searchQuery } = extractSearchResults(result);
 
+    let productMessagesSent = 0;
     if (products.length > 0 && replyCallback) {
-      await sendProductReplies(replyCallback, products, {
+      const replyResult = await sendProductReplies(replyCallback, products, {
         searchQuery,
         phoneNumber,
       });
+      productMessagesSent = replyResult.sent;
     }
 
-    const summary = formatWhatsAppSummary(result.text, products.length > 0);
+    let summary = formatWhatsAppSummary(result.text, productMessagesSent);
+
+    if (products.length > 0 && productMessagesSent === 0) {
+      const fallbackLinks = products
+        .map((product, index) =>
+          formatProductReply(product, index, { searchQuery, phoneNumber })
+        )
+        .join("\n\n");
+      summary = `${summary}\n\n${fallbackLinks}`;
+    }
 
     return wassistReply(summary);
   } catch (error) {

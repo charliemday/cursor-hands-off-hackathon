@@ -7,11 +7,19 @@ type SendProductRepliesOptions = {
   phoneNumber?: string;
 };
 
+export type SendProductRepliesResult = {
+  sent: number;
+  errors: string[];
+};
+
 export async function sendProductReplies(
   replyCallback: string,
   products: AmazonSearchResult[],
   options?: SendProductRepliesOptions
-): Promise<void> {
+): Promise<SendProductRepliesResult> {
+  const errors: string[] = [];
+  let sent = 0;
+
   for (const [index, product] of products.entries()) {
     const body: WassistReplyBody = {
       content: formatProductReply(product, index, {
@@ -24,16 +32,31 @@ export async function sendProductReplies(
       body.image = product.imageUrl;
     }
 
-    const response = await fetch(replyCallback, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const response = await fetch(replyCallback, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
-      throw new Error(
-        `Wassist reply_callback failed (${response.status}): ${await response.text()}`
-      );
+      if (!response.ok) {
+        errors.push(
+          `Option ${index + 1} reply_callback failed (${response.status}): ${await response.text()}`
+        );
+        continue;
+      }
+
+      sent += 1;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown reply_callback error";
+      errors.push(`Option ${index + 1} reply_callback failed: ${message}`);
     }
   }
+
+  if (errors.length > 0) {
+    console.error("Wassist reply_callback errors:", errors);
+  }
+
+  return { sent, errors };
 }

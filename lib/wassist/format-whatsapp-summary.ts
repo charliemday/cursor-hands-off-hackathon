@@ -1,4 +1,7 @@
-export function formatWhatsAppSummary(text: string, hasProductLinks: boolean): string {
+export function formatWhatsAppSummary(
+  text: string,
+  productMessagesSent: number
+): string {
   const cleaned = text
     .replace(/click\s+"Request this"[^.\n]*/gi, "")
     .replace(/product cards?[^.\n]*/gi, "")
@@ -8,7 +11,7 @@ export function formatWhatsAppSummary(text: string, hasProductLinks: boolean): s
   const fallback = "Here are some options that might work for you.";
   const summary = cleaned || fallback;
 
-  if (!hasProductLinks) return summary;
+  if (productMessagesSent <= 0) return summary;
 
   return `${summary}\n\nTap the link under each option to submit a request.`;
 }
